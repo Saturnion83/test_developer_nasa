@@ -579,7 +579,14 @@ namespace test_developer_nasa
             currentAsteroid = null;
             AsteroidList.Clear();
             CloseApproachList.Clear();
-
-    }
+            CBAsteroidi.Tag = null;
+            CBAsteroidi.DataSource = null;
+            CBAsteroidi.SelectedIndex = -1;
+            CBAsteroidi.Tag = 1;
+            PieHazard.Plot.Clear();
+            PieHazard.Visible = false;
+            PieSentry.Plot.Clear();
+            PieSentry.Visible = false;
+        }
     }
 }

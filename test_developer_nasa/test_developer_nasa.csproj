@@ -17,4 +17,14 @@
     <Compile Include="Data\**\*.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="DB\NasaDatabase.mdf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="DB\NasaDatabase.mdf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
