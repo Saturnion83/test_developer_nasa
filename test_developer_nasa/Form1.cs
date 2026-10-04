@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using test_developer_nasa.Classi;
+using System.Configuration;
 
 namespace test_developer_nasa
 {
@@ -14,8 +15,8 @@ namespace test_developer_nasa
         private bool sortAscending = false;
         private SortedDictionary<int, string> AsteroidList = new SortedDictionary<int, string>();
         private BindingList<CloseApproach> CloseApproachList = new BindingList<CloseApproach>();
-        private readonly string nasaApiKey = "cFb13ieCLHIocwfzY7ckQmlju7gJnBzkV1uQhg2o";
-        private readonly string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\lucag\\Desktop\\work\\Dynamic_consult\\test_developer_nasa\\test_developer_nasa\\DB\\NasaDatabase.mdf;Integrated Security=True";
+        private readonly string nasaApiKey = ConfigurationManager.AppSettings["NasaApiKey"] ?? "DEMO_KEY";
+        private readonly string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\\DB\\NasaDatabase.mdf;Integrated Security=True";
         public Form1()
         {
             InitializeComponent();
