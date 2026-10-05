@@ -22,6 +22,23 @@ namespace test_developer_nasa
         ///<summary>inizializzazione della form e setup iniziale </summary>
         public Form1()
         {
+            // Prova a leggere la chiave dal file di configurazione dell'eseguibile (MyApp.exe.config / App.config copiato in output)
+            string? key = null;
+            try
+            {
+                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                key = config.AppSettings.Settings["NasaApiKey"]?.Value;
+            }
+            catch (ConfigurationErrorsException)
+            {
+                key = null;
+            }
+            // fallback a ConfigurationManager.AppSettings se necessario
+            key ??= ConfigurationManager.AppSettings["NasaApiKey"];
+            nasaApiKey = string.IsNullOrWhiteSpace(key) ? "DEMO_KEY" : key;
+
+            if (nasaApiKey == "DEMO_KEY")
+                MessageBox.Show($"API key non trovata, vai nel file test_developer_nasa.dll.config e inserisci la tua API key", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             InitializeComponent();
             DGVCloseAp.DataSource = CloseApproachList;
             DatePicI_ValueChanged(this, EventArgs.Empty);
