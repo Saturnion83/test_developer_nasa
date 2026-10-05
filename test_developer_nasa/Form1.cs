@@ -1,5 +1,4 @@
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ScottPlot;
 using System.ComponentModel;
 using System.Data;
@@ -9,14 +8,18 @@ using System.Configuration;
 
 namespace test_developer_nasa
 {
+    /// <summary>
+    /// Form 1 cè l'interfaccia che contiene l'inter programma per l'utilizzo delle API nasa Asteroids - NeoWs
+    /// </summary>
     public partial class Form1 : Form
     {
-        Asteroidi? currentAsteroid;
-        private bool sortAscending = false;
-        private SortedDictionary<int, string> AsteroidList = new SortedDictionary<int, string>();
-        private BindingList<CloseApproach> CloseApproachList = new BindingList<CloseApproach>();
-        private readonly string nasaApiKey = ConfigurationManager.AppSettings["NasaApiKey"] ?? "DEMO_KEY";
-        private readonly string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\\DB\\NasaDatabase.mdf;Integrated Security=True";
+        Asteroidi? currentAsteroid; /// oggetto asteroide utilizzato per mantenere il dato mentre si naviga l'interfaccia
+        private bool sortAscending = false; /// variabile per la gestione dell'ordinamento nelle datagridview
+        private SortedDictionary<int, string> AsteroidList = new SortedDictionary<int, string>(); /// dizionario chiave nome per mantenere un lista di asteroidi, usato dentro la combobox
+        private BindingList<CloseApproach> CloseApproachList = new BindingList<CloseApproach>(); /// binding list per l'aggiornamento della datagridview nella prima schermata
+        private readonly string nasaApiKey = ConfigurationManager.AppSettings["NasaApiKey"] ?? "DEMO_KEY"; /// api key per acedere ai dati nasa situata nell'app.config
+        private readonly string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\\DB\\NasaDatabase.mdf;Integrated Security=True"; //connection string al database interno
+        ///<summary>inizializzazione della form e setup iniziale </summary>
         public Form1()
         {
             InitializeComponent();
@@ -25,7 +28,9 @@ namespace test_developer_nasa
             FillAsteroidDictionary();
             refreshCBAsteroid();
         }
-
+        /// <summary>
+        /// riempi la lista di asteoidi prendendo tutti gli asteroidi precedente salvati all'interno del DB
+        /// </summary>
         private void FillAsteroidDictionary()
         {
             SqlConnection connection = new SqlConnection(connectionString);
@@ -42,6 +47,12 @@ namespace test_developer_nasa
             System.Diagnostics.Debug.WriteLine($"AsteroidList count: {AsteroidList.Count}");
         }
 
+        /// <summary>
+        /// bottone per prendere tutti gli avvicinamenti di oggetti alla terra in un periodo compreso tra una data inziale 
+        /// ed una finale nel quale non possono differire da più di 7 giorni
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void btnGetCloseApproach_Click(object sender, EventArgs e)
         {
             btnGetCloseApproach.Enabled = false;
@@ -86,11 +97,11 @@ namespace test_developer_nasa
                 missingDates.Add(missingDate);
             }
             connection.Close();
+            // se nel db ci sono range di dati mancanti tra la prima data e l'ultima aggiorna il DB con i dati delle date mancanti
             if (missingDates.Count > 0 || CBForceUpdate.Checked)
             {
                 UpdateLabel.Visible = true;
                 UpdateLabel.Text = "Download dati in corso...";
-                //dati mancanti nel database, fare la chiamata all'API per scaricare i dati
                 //calcola l'intervallo di date da scaricare
                 var missingdatarange = NasaDatabase.Missingdaterange(missingDates);
                 List<Task<(int updatedAsteroid, int updatedCloseApproach)>> downloadTasks = new List<Task<(int updatedAsteroid, int updatedCloseApproach)>>();
@@ -114,6 +125,11 @@ namespace test_developer_nasa
             updatePieHazard_Sentry(startDate, endDate);
             btnGetCloseApproach.Enabled = true;
         }
+        /// <summary>
+        /// aggiornamento dei grafici a torta hazard e sentry, mostrano quanti asteoidi degli avvicanemtni ottenuti sono potenzialmente pericoloso e sse sono sentry
+        /// </summary>
+        /// <param name="startDate">data iniziale</param>
+        /// <param name="endDate">data finale</param>
         private void updatePieHazard_Sentry(DateTime startDate, DateTime endDate)
         {
             PieHazard.Plot.Clear();
@@ -202,6 +218,9 @@ namespace test_developer_nasa
             PieSentry.Refresh();
 
         }
+        /// <summary>
+        /// aggiornamento grafico torna per la distribuzione dei pianeti al quale l'asteroide passa vicino
+        /// </summary>
         private void updatePieHorbitBody()
         {
             if (currentAsteroid == null)
@@ -250,6 +269,11 @@ namespace test_developer_nasa
             PieOrbitingBody.Plot.ShowLegend(Alignment.LowerRight);
             PieOrbitingBody.Refresh();
         }
+        /// <summary>
+        /// aggiornamento della datagridview per mostrate gli avvicinamenti della terra comresi tra star e enddate
+        /// </summary>
+        /// <param name="startDate">data iniziale</param>
+        /// <param name="endDate">data finale</param>
         private void updateDGVCloseApproach(DateTime startDate, DateTime endDate)
         {
             CloseApproachList.Clear();
@@ -273,6 +297,9 @@ namespace test_developer_nasa
             approachLabel.Text = $"Trovati {CloseApproachList.Count} passaggi" +
                 $" ravvicinati tra il\n{startDate.ToShortDateString()} e il {endDate.ToShortDateString()}";
         }
+        ///<summary>evento di controllo per assicurare che endate-stardate non siamo maggiore di 7 giorni</summary>
+        /// /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DatePicI_ValueChanged(object sender, EventArgs e)
         {
             DatePicF.MaxDate = DateTimePicker.MaxDateTime; // Imposta la data massima a DateTime.MaxValue
@@ -281,7 +308,11 @@ namespace test_developer_nasa
             DatePicF.Value = DatePicI.Value;
             DatePicF.MaxDate = DatePicI.Value.AddDays(7); // Imposta la data massima a 7 giorni dopo la data iniziale
         }
-
+        /// <summary>
+        /// evento per la formattazione testuale della combobox asteroidi
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void CBAsteroidi_Format(object sender, ListControlConvertEventArgs e)
         {
             if (e.ListItem is KeyValuePair<int, string> asteroide)
@@ -290,7 +321,11 @@ namespace test_developer_nasa
                 e.Value = $"Id: {asteroide.Key}, Nome: {asteroide.Value}";
             }
         }
-
+        /// <summary>
+        /// switch automatico della custom tab control tramite checkbox
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void CheckNuovoAsteroide_CheckedChanged(object sender, EventArgs e)
         {
             if (CheckNuovoAsteroide.Checked)
@@ -306,7 +341,11 @@ namespace test_developer_nasa
             TBNewAsteroid.Clear();
             UpdateAsteroidPage();
         }
-
+        /// <summary>
+        /// evento per la selezione dell'asteroide tramite combobox e sucessivo aggiornamento della pagina con richiesta di aggiornamento dati se necessario
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void CBAsteroidi_SelectedIndexChanged(object sender, EventArgs e)
         {
             CBAsteroidi.Enabled = false;
@@ -340,6 +379,9 @@ namespace test_developer_nasa
             UpdateAsteroidPage();
             CBAsteroidi.Enabled = true;
         }
+        /// <summary>
+        /// aggiornamento grafico della pagina asteroid page 
+        /// </summary>
         private void UpdateAsteroidPage()
         {
             updateDGVAsteroidClose();
@@ -347,6 +389,9 @@ namespace test_developer_nasa
             UpdatePropertyGrids();
             updatePieHorbitBody();
         }
+        /// <summary>
+        /// aggiornamento delle proprietà di orbita e classe orbita mostrare del current asteroid
+        /// </summary>
         private void UpdatePropertyGrids()
         {
             if (currentAsteroid == null)
@@ -358,6 +403,9 @@ namespace test_developer_nasa
             PGOrbitalData.SelectedObject = currentAsteroid.OrbitData;
             PGOrbitClass.SelectedObject = currentAsteroid.OrbitData!.OrbitClass;
         }
+        /// <summary>
+        /// aggiornamento delle proprietà del current asteroid
+        /// </summary>
         private void UpdateLabelsAsteroid()
         {
             if (currentAsteroid == null)
@@ -379,6 +427,9 @@ namespace test_developer_nasa
             TBDiameterMax.Text = currentAsteroid.EstimatedDiameterMaxKm.ToString();
             TBMagnitude.Text = currentAsteroid.AbsoluteMagnitudeH.ToString();
         }
+        /// <summary>
+        /// aggiornamento della datagridview con tutti gli avvicinamenti registrati dal current asteroid
+        /// </summary>
         private void updateDGVAsteroidClose()
         {
             DGVAsteroidClose.DataSource = null;
@@ -391,6 +442,10 @@ namespace test_developer_nasa
             DGVAsteroidClose.DataSource = currentAsteroid.CloseApproaches.Values.ToList();
             DGVAsteroidClose.Refresh();
         }
+        /// <summary>
+        /// richiesta dati dal DB e salvataggio del current asteroid in memoria
+        /// </summary>
+        /// <param name="asteroidId">id dell'asteroide da sttare come current</param>
         private void UpdateCurrentAsteroid(int asteroidId)
         {
             CloseApproach c;
@@ -429,7 +484,11 @@ namespace test_developer_nasa
             currentAsteroid.OrbitData = new OrbitalData(reader, oc);
             connection.Close();
         }
-
+        /// <summary>
+        /// evento per l'apertura del browser sul link dato 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TBNasaUrl_LinkClicked(object sender, LinkClickedEventArgs e)
         {
             try
@@ -445,7 +504,11 @@ namespace test_developer_nasa
                 MessageBox.Show($"Impossibile aprire il link: {ex.Message}", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
+        /// <summary>
+        /// inserimento di un nuovo asteroide nel DB dato un ID
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void BTNewAsteroide_Click(object sender, EventArgs e)
         {
             TBNewAsteroid.Enabled = false;
@@ -499,6 +562,9 @@ namespace test_developer_nasa
             currentAsteroid = tmpCurrentAsteroid;
             CBAsteroidi.SelectedIndex = CBAsteroidi.Items.IndexOf(new KeyValuePair<int, string>(currentAsteroid!.Id, currentAsteroid.Name));
         }
+        /// <summary>
+        /// aggiornamento della combobox in caso di nuovi asteroidi aggiunti alla lista in memoria
+        /// </summary>
         private void refreshCBAsteroid()
         {
             CBAsteroidi.Tag = null; //flag per disabilitare l'evento cbasteroid index change
@@ -507,7 +573,11 @@ namespace test_developer_nasa
             CBAsteroidi.SelectedIndex = -1;
             CBAsteroidi.Tag = 1; //flag per abilitare l'evento cbasteroid index change
         }
-
+        /// <summary>
+        /// evento per la gestione di ordinamento delle varie colonne sul click dell'header 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DGVCloseAp_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             string nomeColonna = DGVCloseAp.Columns[e.ColumnIndex].DataPropertyName;
@@ -527,7 +597,11 @@ namespace test_developer_nasa
             DGVCloseAp.DataSource = CloseApproachList;
             sortAscending = !sortAscending;
         }
-
+        /// <summary>
+        /// evento per la gestione di ordinamento delle varie colonne sul click dell'header 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DGVAsteroidClose_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             string nomeColonna = DGVAsteroidClose.Columns[e.ColumnIndex].DataPropertyName;
@@ -546,7 +620,11 @@ namespace test_developer_nasa
             DGVAsteroidClose.DataSource = new BindingList<CloseApproach>(listaOrdinata);
             sortAscending = !sortAscending;
         }
-
+        /// <summary>
+        /// evento per il trasferimento alla pagina asteroide associata all'asteroide selezionato dalla lista di avvicinamenti alla terra in un range di date
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DGVCloseAp_CellMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             if (e.RowIndex < 0)
@@ -563,7 +641,11 @@ namespace test_developer_nasa
                 }
             }
         }
-
+        /// <summary>
+        /// bottone per lo svuotamento del DB e l'eliminazione di tutti i dati salvati in esso
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BTNCleanDB_Click(object sender, EventArgs e)
         {
 

@@ -1,30 +1,15 @@
 using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using System.Data.Common;
 using System.Text.Json;
 
 
 namespace test_developer_nasa.Classi
 {
-    // Generated from table 'Asteroidi'
+    /// <summary>
+    /// classe asteroidi
+    /// la classe implementa semplicemente la stessa stuttura del database
+    /// </summary>
     public class Asteroidi
     {
-       /* public override string ToString()
-        {
-                return $"Asteroid: {Name}," +
-                $" NeoReferenceId: {NeoReferenceId}," +
-                $" AbsoluteMagnitudeH: {AbsoluteMagnitudeH}," +
-                $" IsPotentiallyHazardous: {IsPotentiallyHazardous}," +
-                $" IsSentryObject: {IsSentryObject}," +
-                $" EstimatedDiameterMinKm: {EstimatedDiameterMinKm}," +
-                $" EstimatedDiameterMaxKm: {EstimatedDiameterMaxKm}," +
-                $" CloseApproaches Count: {CloseApproaches.Count}";
-        }*/
-        public string CBToString()
-        {
-            return $"{Id} - {Name}";
-        }
         public int Id { get; set; }
         public int NeoReferenceId { get; set; } = default!;
         public string Name { get; set; } = default!;
@@ -34,9 +19,19 @@ namespace test_developer_nasa.Classi
         public bool IsSentryObject { get; set; }
         public double EstimatedDiameterMinKm { get; set; }
         public double EstimatedDiameterMaxKm { get; set; }
+        /// <summary>
+        /// dizionario per tenere traccia di tutti gli avvicinamenti dell'asteroide
+        /// </summary>
         public Dictionary<DateTimeOffset, CloseApproach> CloseApproaches { get; set; } = new Dictionary<DateTimeOffset, CloseApproach>();
+        /// <summary>
+        /// dati dell'orbita, può essere che non sia assegnato poiche quando prendiamo i dati per gli avvicinamenti terrestri i dati specifici dell'orbita dell'asteroide
+        /// non sono passati e vengono salvati successivamente ustilizzando l'api per ottenere i dati dell'asteroide
+        /// </summary>
         public OrbitalData? OrbitData { get; set; }
-        //costruttore per l'api
+        /// <summary>
+        /// costruttore della classe Asteroidi utilizzato suuccessivamente alla chiamata API
+        /// </summary>
+        /// <param name="json">json dell'oggetto ricevuto dall'api</param>
         public Asteroidi(JsonElement json)
         {
             this.Id = int.Parse(json.GetProperty("id").GetString() ?? string.Empty);
@@ -49,7 +44,10 @@ namespace test_developer_nasa.Classi
             this.EstimatedDiameterMinKm = json.GetProperty("estimated_diameter").GetProperty("kilometers").GetProperty("estimated_diameter_min").GetDouble();
             this.EstimatedDiameterMaxKm = json.GetProperty("estimated_diameter").GetProperty("kilometers").GetProperty("estimated_diameter_max").GetDouble();
         }
-        //costuttore per il db
+        /// <summary>
+        /// costruttore della classe Asteroidi utilizzato suuccessivamente alle chiamate del Database
+        /// </summary>
+        /// <param name="reader">oggetto ricevuto dal Database</param>
         public Asteroidi(SqlDataReader reader)
         {
             this.Id = reader.GetInt32(reader.GetOrdinal("Id"));

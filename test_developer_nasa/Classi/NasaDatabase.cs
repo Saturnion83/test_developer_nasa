@@ -1,20 +1,26 @@
 ﻿using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
 using System.Text.Json;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+
 
 namespace test_developer_nasa.Classi
 {
+    /// <summary>
+    /// classe per la gestione delle chiamate api e salvataggio dei dati all'interno del DB
+    /// </summary>
     
     public class NasaDatabase
     {
 
 
-        // metodo api close approach che prende in input startDate, endDate, connectionString, AsteroidList e nasaApiKey e restituisce una tupla con il numero di asteroidi aggiornati e il numero di close approach aggiornati
+        /// <summary>
+        /// metodo api close approach che prende in input startDate, endDate, connectionString, AsteroidList e nasaApiKey e restituisce una tupla con il numero di asteroidi aggiornati e il numero di close approach aggiornati
+        /// </summary>
+        /// <param name="startDate">data iniziale</param>
+        /// <param name="endDate">data finale</param>
+        /// <param name="connectionString">stringa di connessione al DB</param>
+        /// <param name="AsteroidList">dizionario degli asteroidi in memoria</param>
+        /// <param name="nasaApiKey">chiave API</param>
+        /// <returns>int updatedAsteroid, int updatedCloseApproach che indicano quante righe asteroide e avvicinamente sono state aggiunte all'interno del database</returns>
         public static async Task<(int updatedAsteroid, int updatedCloseApproach)> CloseApproachApi(DateTime startDate, DateTime endDate, string connectionString, SortedDictionary<int, string> AsteroidList, string nasaApiKey)
         {
             int updatedAsteroid = 0;
@@ -99,7 +105,11 @@ namespace test_developer_nasa.Classi
             }
             return (updatedAsteroid, updatedCloseApproach);
         }
-
+       /// <summary>
+       /// metodo per ottenere i range di date mancanti da una data iniziale a una data finale partendo da una lista di date mancanti
+       /// </summary>
+       /// <param name="missingDates">lista delle date mancanti nel databse</param>
+       /// <returns>lista di range ottenuuta dalle date mancanti nel database</returns>
         public static List<Tuple<DateTime, DateTime>> Missingdaterange(List<DateTime> missingDates)
         {
             List<Tuple<DateTime, DateTime>> missingDateRanges = new List<Tuple<DateTime, DateTime>>();
@@ -127,7 +137,17 @@ namespace test_developer_nasa.Classi
             missingDateRanges.Add(new Tuple<DateTime, DateTime>(rangeStart, rangeEnd));
             return missingDateRanges;
         }
-        // Metodo per ottenere i dati di un asteroide specifico, già presente nel database, dall'API di NASA e salvarli nel database
+        /// <summary>
+        /// Metodo per ottenere i dati di un asteroide specifico, già presente nel database, dall'API di NASA e salvarli nel database, il flag newasteroid e asteroidlist servono in caso si voglia salvare i dati dell'asteroide
+        /// poiche esso è un asteroide nuovo, in caso non vengano passate si presuppone che l'asteroide esista già nel DB e vengano aggiornati i dati con l'orbita e i vari close apporach dell'ateroide
+        /// </summary>
+        /// <param name="asteroidId">id dell'asteroide da mandare all'api</param>
+        /// <param name="connectionString">stringa di connessione</param>
+        /// <param name="nasaApiKey">chiave API</param>
+        /// <param name="newAsteroide">flag per aggiungere un nuovo asteroide al database</param>
+        /// <param name="AsteroidList">dizionario per salvare l'asteroide nuuovo in memoria</param>
+        /// <returns></returns>
+
         public static async Task AsteroidApi(int asteroidId, string connectionString, string nasaApiKey, bool newAsteroide=false, SortedDictionary<int, string>? AsteroidList = null)
         {
             string apiUrl=$"https://api.nasa.gov/neo/rest/v1/neo/{asteroidId}?api_key={nasaApiKey}";

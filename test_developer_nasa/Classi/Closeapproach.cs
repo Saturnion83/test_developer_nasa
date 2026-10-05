@@ -1,11 +1,13 @@
 using Microsoft.Data.SqlClient;
-using System;
 using System.Globalization;
 using System.Text.Json;
 
 namespace test_developer_nasa.Classi
 {
-    // Generated from table 'Closeapproach'
+    /// <summary>
+    /// classe CloseApproach
+    /// la classe implementa semplicemente la stessa stuttura del database
+    /// </summary>
     public class CloseApproach
     {
         public int AsteroidId { get; set; }
@@ -14,7 +16,11 @@ namespace test_developer_nasa.Classi
         public double? RelativeVelocityKmH { get; set; }
         public double? MissDistanceKm { get; set; }
         public string? OrbitingBody { get; set; }
-        //costruttore per l'api
+        /// <summary>
+        /// costruttore della classe CloseApproach utilizzato suuccessivamente alla chiamata API
+        /// </summary>
+        /// <param name="json">json dell'oggetto ricevuto dall'api</param>
+        /// <param name="idasteroide">id dell'asteroide al quale l'avvicinamento fa riferimento</param>
         public CloseApproach(JsonElement json, int idasteroide)
         {
             this.AsteroidId = idasteroide;
@@ -25,6 +31,10 @@ namespace test_developer_nasa.Classi
             this.MissDistanceKm = double.Parse(json.GetProperty("miss_distance").GetProperty("kilometers").GetString() ?? string.Empty, CultureInfo.InvariantCulture);
             this.OrbitingBody = json.GetProperty("orbiting_body").GetString();
         }
+        /// <summary>
+        /// costruttore della classe CloseApproach utilizzato suuccessivamente alle chiamate del Database
+        /// </summary>
+        /// <param name="reader">oggetto ricevuto dal Database</param>
         public CloseApproach(SqlDataReader reader)
         {
             this.AsteroidId = reader.GetInt32(reader.GetOrdinal("AsteroidId"));

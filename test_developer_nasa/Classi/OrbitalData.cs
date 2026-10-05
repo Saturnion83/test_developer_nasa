@@ -1,19 +1,17 @@
 ﻿using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data.Common;
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 
 namespace test_developer_nasa.Classi
 {
-    [ReadOnly(true)]
+    /// <summary>
+    /// classe OrbitalData
+    /// la classe implementa semplicemente la stessa stuttura del database
+    /// </summary>
+    [ReadOnly(true)] //serve per dire alla property grid di non essere modificabile 
     public class OrbitalData
     {
-
-        
         public int AsteroidId { get; set; }
         public int OrbitId { get; set; }
         public double? AphelionDistance { get; set; }
@@ -37,8 +35,14 @@ namespace test_developer_nasa.Classi
         public double? PerihelionDistance { get; set; }
         public double? PerihelionTime { get; set; }
         public double? SemiMajorAxis { get; set; }
-        [Browsable(false)]
+        [Browsable(false)] //serve a dire alla property grid di non essere mostrato poichè vogliamo questi dati in una seconda property grid
         public OrbitClass OrbitClass { get; set; }
+        /// <summary>
+        /// costruttore della classe OrbitalData utilizzato suuccessivamente alla chiamata API
+        /// </summary>
+        /// <param name="json">json dell'oggetto ricevuto dall'api</param>
+        /// <param name="IDasteroide">Asteroide alla quale i dati dell'orbita fanno riferimento</param>
+        ///  /// <param name="orbitClass">classe alla quale l'orbita viene catalogata</param>
         public OrbitalData(JsonElement json,int IDasteroide, OrbitClass orbitClass)
         {
             this.AsteroidId = IDasteroide;
@@ -66,6 +70,11 @@ namespace test_developer_nasa.Classi
             this.PerihelionTime = double.Parse(json.GetProperty("perihelion_time").GetString() ?? string.Empty, CultureInfo.InvariantCulture);
             this.SemiMajorAxis = double.Parse(json.GetProperty("semi_major_axis").GetString() ?? string.Empty, CultureInfo.InvariantCulture);
         }
+        /// <summary>
+        /// costruttore della classe CloseApproach utilizzato suuccessivamente alle chiamate del Database
+        /// </summary>
+        /// <param name="reader">oggetto ricevuto dal Database</param>
+        /// <param name="orbitClass">oggetto classe orbita nella quale l'orbita viene catalogata</param>
         public OrbitalData(SqlDataReader reader, OrbitClass orbitClass)
         {
             this.AsteroidId = reader.GetInt32(reader.GetOrdinal("asteroid_id"));
