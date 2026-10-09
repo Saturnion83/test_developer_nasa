@@ -18,7 +18,122 @@ namespace test_developer_nasa
         private SortedDictionary<int, string> AsteroidList = new SortedDictionary<int, string>(); /// dizionario chiave nome per mantenere un lista di asteroidi, usato dentro la combobox
         private BindingList<CloseApproach> CloseApproachList = new BindingList<CloseApproach>(); /// binding list per l'aggiornamento della datagridview nella prima schermata
         private readonly string nasaApiKey = ConfigurationManager.AppSettings["NasaApiKey"] ?? "DEMO_KEY"; /// api key per acedere ai dati nasa situata nell'app.config
-        private readonly string connectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\\DB\\NasaDatabase.mdf;Integrated Security=True"; //connection string al database interno
+        private static string serverName = @"(localdb)\mssqllocaldb"; /// nome Server Database
+        private static string dbName = "NasaDatabase"; ///nome del Database
+
+        private static string masterConnectionString = $"Server={serverName};Database=master;Integrated Security=True;TrustServerCertificate=True;"; ///stringa di connessione iniziale
+
+        public static string connectionString = $"Server={serverName};Database={dbName};Integrated Security=True;TrustServerCertificate=True;"; ///stringa di connessione finale
+        /// <summary>
+        /// inizializza il database controllando se esiste già, in caso non esistesse ne crea uno (la posizione del db si trova sotto C:/Users/"NomeUtente"/
+        /// </summary>
+        public static void InitializeDatabase()
+        {
+            // 1. Crea il Database se non esiste
+            using (SqlConnection conn = new SqlConnection(masterConnectionString))
+            {
+                conn.Open();
+                string createDbQuery = $@"
+                IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '{dbName}')
+                BEGIN
+                    CREATE DATABASE [{dbName}];
+                END;";
+
+                using (SqlCommand cmd = new SqlCommand(createDbQuery, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // 2. Crea le Tabelle nel nuovo Database
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                string createTablesQuery = @"
+            -- 1. Tabella Asteroidi
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Asteroidi')
+            BEGIN
+                CREATE TABLE [dbo].[Asteroidi] (
+                    [Id]                     INT            NOT NULL,
+                    [NeoReferenceId]         INT            NOT NULL,
+                    [Name]                   NVARCHAR (200) NOT NULL,
+                    [NasaJplUrl]             NVARCHAR (500) NULL,
+                    [AbsoluteMagnitudeH]     FLOAT (53)     NULL,
+                    [IsPotentiallyHazardous] BIT            NOT NULL,
+                    [IsSentryObject]         BIT            NOT NULL,
+                    [EstimatedDiameterMinKm] FLOAT (53)     NULL,
+                    [EstimatedDiameterMaxKm] FLOAT (53)     NULL,
+                    PRIMARY KEY CLUSTERED ([Id] ASC)
+                );
+            END;
+
+            -- 2. Tabella OrbitClass
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'OrbitClass')
+            BEGIN
+                CREATE TABLE [dbo].[OrbitClass] (
+                    [orbit_class_type]        NCHAR (3)      NOT NULL,
+                    [orbit_class_description] NVARCHAR (200) NULL,
+                    [orbit_class_range]       NVARCHAR (200) NULL,
+                    PRIMARY KEY CLUSTERED ([orbit_class_type] ASC)
+                );
+            END;
+
+            -- 3. Tabella CloseApproach
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'CloseApproach')
+            BEGIN
+                CREATE TABLE [dbo].[CloseApproach] (
+                    [AsteroidId]             INT                NOT NULL,
+                    [CloseApproachDate]      DATETIMEOFFSET (7) NOT NULL,
+                    [EpochDateCloseApproach] BIGINT             NULL,
+                    [RelativeVelocityKmH]    FLOAT (53)         NULL,
+                    [MissDistanceKm]         FLOAT (53)         NULL,
+                    [OrbitingBody]           NVARCHAR (100)     NULL,
+                    CONSTRAINT [PK_CloseApproach] PRIMARY KEY CLUSTERED ([AsteroidId] ASC, [CloseApproachDate] ASC),
+                    CONSTRAINT [FK_CloseApproach_Asteroidi] FOREIGN KEY ([AsteroidId]) REFERENCES [dbo].[Asteroidi] ([Id]) ON DELETE CASCADE
+                );
+            END;
+
+            -- 4. Tabella OrbitalData
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'OrbitalData')
+            BEGIN
+                CREATE TABLE [dbo].[OrbitalData] (
+                    [asteroid_id]                 INT                NOT NULL,
+                    [orbit_id]                    INT                NOT NULL,
+                    [aphelion_distance]           FLOAT (53)         NULL,
+                    [ascending_node_longitude]    FLOAT (53)         NULL,
+                    [data_arc_in_days]            INT                NULL,
+                    [eccentricity]                FLOAT (53)         NULL,
+                    [epoch_osculation]            FLOAT (53)         NULL,
+                    [equinox]                     NVARCHAR (50)      NULL,
+                    [first_observation_date]      DATE               NULL,
+                    [inclination]                 FLOAT (53)         NULL,
+                    [jupiter_tisserand_invariant] FLOAT (53)         NULL,
+                    [last_observation_date]       DATE               NULL,
+                    [mean_anomaly]                FLOAT (53)         NULL,
+                    [mean_motion]                 FLOAT (53)         NULL,
+                    [minimum_orbit_intersection]  FLOAT (53)         NULL,
+                    [observations_used]           INT                NULL,
+                    [orbit_determination_date]    DATETIMEOFFSET (7) NULL,
+                    [orbit_uncertainty]           SMALLINT           NULL,
+                    [orbital_period]              FLOAT (53)         NULL,
+                    [perihelion_argument]         FLOAT (53)         NULL,
+                    [perihelion_distance]         FLOAT (53)         NULL,
+                    [perihelion_time]             FLOAT (53)         NULL,
+                    [semi_major_axis]             FLOAT (53)         NULL,
+                    [orbit_class]                 NCHAR (3)          NULL,
+                    PRIMARY KEY CLUSTERED ([asteroid_id] ASC),
+                    CONSTRAINT [FK_OrbitalData_Asteroidi] FOREIGN KEY ([asteroid_id]) REFERENCES [dbo].[Asteroidi] ([Id]) ON DELETE CASCADE,
+                    CONSTRAINT [FK_OrbitalData_OrbitClass] FOREIGN KEY ([orbit_class]) REFERENCES [dbo].[OrbitClass] ([orbit_class_type])
+                );
+            END;";
+
+                using (SqlCommand cmd = new SqlCommand(createTablesQuery, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
         ///<summary>inizializzazione della form e setup iniziale </summary>
         public Form1()
         {
@@ -39,6 +154,7 @@ namespace test_developer_nasa
 
             if (nasaApiKey == "DEMO_KEY")
                 MessageBox.Show($"API key non trovata, vai nel file test_developer_nasa.dll.config e inserisci la tua API key", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            InitializeDatabase(); //inizializzazione DB 
             InitializeComponent();
             DGVCloseAp.DataSource = CloseApproachList;
             DatePicI_ValueChanged(this, EventArgs.Empty);

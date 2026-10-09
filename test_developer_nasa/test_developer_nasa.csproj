@@ -20,21 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="DB\NasaDatabase.mdf" />
-    <None Remove="DB\NasaDatabase_log.ldf" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="DB\NasaDatabase.mdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="DB\NasaDatabase_log.ldf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="App.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="DB\NasaDatabase.mdf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Update="DB\NasaDatabase_log.ldf">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -11,7 +11,6 @@ namespace test_developer_nasa.Classi
     public class NasaDatabase
     {
 
-
         /// <summary>
         /// metodo api close approach che prende in input startDate, endDate, connectionString, AsteroidList e nasaApiKey e restituisce una tupla con il numero di asteroidi aggiornati e il numero di close approach aggiornati
         /// </summary>
